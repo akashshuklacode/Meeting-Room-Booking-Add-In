@@ -8,6 +8,30 @@ using Office = Microsoft.Office.Core;
 
 namespace Meeting_Room_Booking_Add_In
 {
+
+    //Defining the data model
+    public class Model
+    {
+        public List<Floor> floors { get; set; }
+    }
+
+    public class Floor
+    {
+        public string Name { get; set; }
+        public List<Room> rooms { get; set; }
+    }
+
+    public class Room
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public int locationX { get; set; }
+        public int locationY { get; set; }
+        public int sizeX { get; set; }
+        public int sizeY { get; set; }
+    }
+
+
     public partial class ThisAddIn
     {
         //Inspector represents the window in which an Outlook Item is displayed
@@ -46,6 +70,15 @@ namespace Meeting_Room_Booking_Add_In
                     appointmentItem.Body = "Meeting Room Booking Addin";
                 }
             }
+        }
+
+        //Event handler for button click
+        public static void buttonClick(object sender,EventArgs e)
+        {
+            //find the sender button
+            var button = (System.Windows.Forms.Button)sender;
+            //change button backcolor
+            button.BackColor = System.Drawing.Color.Blue;
         }
 
         #region VSTO generated code
