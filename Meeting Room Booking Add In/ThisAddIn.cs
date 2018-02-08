@@ -39,6 +39,7 @@ namespace Meeting_Room_Booking_Add_In
         //This reference prevents the garbage collector from freeing the memory that contains the event handler for the
         //E:Microsoft.Office.Interop.Outlook.InspectorsEvents_Event.NewInspector event.
         Outlook.Inspectors inspectors;
+        Outlook.AppointmentItem appointmentItem;
 
         //Event Handler ThisAddIn_Startup runs as soon as the add-in is clicked
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
@@ -60,7 +61,7 @@ namespace Meeting_Room_Booking_Add_In
         private void Inspectors_NewInspector(Outlook.Inspector Inspector)
         {
             //add a sample body text onto meeting item
-            Outlook.AppointmentItem appointmentItem = Inspector.CurrentItem;
+            appointmentItem = Inspector.CurrentItem;
             if(appointmentItem != null)
             {
                 //the EntryID property is not set for an Outlook item until it is saved or sent
@@ -79,6 +80,9 @@ namespace Meeting_Room_Booking_Add_In
             var button = (System.Windows.Forms.Button)sender;
             //change button backcolor
             button.BackColor = System.Drawing.Color.Blue;
+
+            //add the button to appointment attendees list
+            
         }
 
         #region VSTO generated code
