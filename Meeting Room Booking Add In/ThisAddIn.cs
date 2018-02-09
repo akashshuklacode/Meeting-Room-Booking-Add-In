@@ -5,6 +5,7 @@ using System.Text;
 using System.Xml.Linq;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
+using Microsoft.Exchange.WebServices.Data;
 
 namespace Meeting_Room_Booking_Add_In
 {
@@ -39,7 +40,7 @@ namespace Meeting_Room_Booking_Add_In
         //This reference prevents the garbage collector from freeing the memory that contains the event handler for the
         //E:Microsoft.Office.Interop.Outlook.InspectorsEvents_Event.NewInspector event.
         Outlook.Inspectors inspectors;
-        Outlook.AppointmentItem appointmentItem;
+        static Outlook.AppointmentItem appointmentItem;
 
         //Event Handler ThisAddIn_Startup runs as soon as the add-in is clicked
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
@@ -82,7 +83,43 @@ namespace Meeting_Room_Booking_Add_In
             button.BackColor = System.Drawing.Color.Blue;
 
             //add the button to appointment attendees list
-            
+            appointmentItem.Recipients.Add(button.Name);
+        }
+
+        //Event handler for load free busy button click
+        public static void loadFreeBusy(object sender, EventArgs e)
+        {
+            List<AttendeeInfo> attendees = new List<AttendeeInfo>();
+            for (int i = 0; i < RoomSelectionGui.buttons.Count; i++)
+            {
+                RoomSelectionGui.buttons[i].BackColor = System.Drawing.Color.LightGoldenrodYellow;
+                attendees.Add(RoomSelectionGui.buttons[i].Name);
+            }
+
+            ExchangeService exchangeService = new ExchangeService();
+            exchangeService.UseDefaultCredentials = true;
+            exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
+            AvailabilityOptions myOptions = new AvailabilityOptions();
+            myOptions.MeetingDuration = appointmentItem.Duration;
+            myOptions.RequestedFreeBusyView = FreeBusyViewType.Detailed;
+            GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(appointmentItem.Start.Date, appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
+            foreach (AttendeeAvailability availability in freeBusyResults.AttendeesAvailability)
+            {
+                foreach (CalendarEvent calendarItem in availability.CalendarEvents)
+                {
+                    //if the start of the appointment falls in between the calendar item start and calendar item end
+                    if (DateTime.Compare(calendarItem.StartTime, appointmentItem.Start) <= 0 && DateTime.Compare(appointmentItem.Start, calendarItem.EndTime) <= 0)
+                    {
+                        for (int q = 0; q < RoomSelectionGui.buttons.Count; q++)
+                        {
+                            if (RoomSelectionGui.buttons[q].Name == calendarItem.Details.Location)
+                            {
+                                RoomSelectionGui.buttons[q].BackColor = System.Drawing.Color.Red;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         #region VSTO generated code

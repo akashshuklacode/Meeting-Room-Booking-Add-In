@@ -8,8 +8,9 @@ namespace Meeting_Room_Booking_Add_In
     partial class RoomSelectionGui : Microsoft.Office.Tools.Outlook.FormRegionBase
     {
 
-//Custom Behaviour
-//---------------------------------------------------------------------------------------------------------------------
+        #region Custom Behaviour
+        //Custom Behaviour
+        //---------------------------------------------------------------------------------------------------------------------
 
         //Declaration of static properties
         public static Model planData;
@@ -32,7 +33,7 @@ namespace Meeting_Room_Booking_Add_In
         private void PopulateData()
         {
             //Deserialize Plan Json data to populate planData
-            planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'1', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
+            planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'1', 'Name':'cr-NBLR-1.9.3018@netapp.com', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'1', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
 
             //populate floors' list
             floors = new List<Floor>();
@@ -57,6 +58,10 @@ namespace Meeting_Room_Booking_Add_In
             //populate panel with selected floor
             //default floor is Ground Floor (0)
             populateRoomPanel(0);
+
+            //Add Event handler for load free busy button click
+            this.loadFreeBusyButton.Click += new EventHandler(ThisAddIn.loadFreeBusy);
+
         }
 
         private void populateRoomPanel(int floorIndex)
@@ -85,11 +90,12 @@ namespace Meeting_Room_Booking_Add_In
             {
                 //add the button to the panel
                 panelRooms.Controls.Add(buttons[i]);
-                //populate each button
+                //populate each button with its respective properties
                 int scale = 10;
                 buttons[i].Location = new System.Drawing.Point(rooms[i].locationX*scale,rooms[i].locationY*scale);
                 buttons[i].Size = new System.Drawing.Size(rooms[i].sizeX * scale, rooms[i].sizeY * scale);
                 buttons[i].Name = rooms[i].Name;
+                buttons[i].Text = rooms[i].Name;
                 buttons[i].TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
                 buttons[i].BackColor = System.Drawing.Color.DarkGray;
                 //assing an action for button click
@@ -104,8 +110,9 @@ namespace Meeting_Room_Booking_Add_In
             //populate the panel with the information of selected floor respectively
             populateRoomPanel(this.FloorListComboBox.SelectedIndex);
         }
-//-------------------------------------------------------------------------------------------------------------------
 
+        //-------------------------------------------------------------------------------------------------------------------
+        #endregion
 
         /// <summary> 
         /// Required designer variable.
@@ -134,6 +141,7 @@ namespace Meeting_Room_Booking_Add_In
         {
             this.FloorListComboBox = new System.Windows.Forms.ComboBox();
             this.panelRooms = new System.Windows.Forms.Panel();
+            this.loadFreeBusyButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // FloorListComboBox
@@ -155,10 +163,22 @@ namespace Meeting_Room_Booking_Add_In
             this.panelRooms.Size = new System.Drawing.Size(1064, 628);
             this.panelRooms.TabIndex = 1;
             // 
+            // loadFreeBusyButton
+            // 
+            this.loadFreeBusyButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.loadFreeBusyButton.Font = new System.Drawing.Font("Comic Sans MS", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.loadFreeBusyButton.Location = new System.Drawing.Point(343, 20);
+            this.loadFreeBusyButton.Name = "loadFreeBusyButton";
+            this.loadFreeBusyButton.Size = new System.Drawing.Size(200, 26);
+            this.loadFreeBusyButton.TabIndex = 2;
+            this.loadFreeBusyButton.Text = "Load Free/Busy";
+            this.loadFreeBusyButton.UseVisualStyleBackColor = true;
+            // 
             // RoomSelectionGui
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.loadFreeBusyButton);
             this.Controls.Add(this.panelRooms);
             this.Controls.Add(this.FloorListComboBox);
             this.Name = "RoomSelectionGui";
@@ -188,6 +208,7 @@ namespace Meeting_Room_Booking_Add_In
 
         private System.Windows.Forms.ComboBox FloorListComboBox;
         private System.Windows.Forms.Panel panelRooms;
+        private Button loadFreeBusyButton;
 
         public partial class RoomSelectionGuiFactory : Microsoft.Office.Tools.Outlook.IFormRegionFactory
         {
