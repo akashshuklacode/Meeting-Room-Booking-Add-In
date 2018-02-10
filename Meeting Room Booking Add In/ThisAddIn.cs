@@ -141,6 +141,7 @@ namespace Meeting_Room_Booking_Add_In
                     }
                 }
             }
+
         }
 
         #region VSTO generated code
