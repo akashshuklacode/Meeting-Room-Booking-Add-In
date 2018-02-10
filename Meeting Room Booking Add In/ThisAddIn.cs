@@ -50,7 +50,26 @@ namespace Meeting_Room_Booking_Add_In
         {
             RoomSelectionGui.planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'cr-NBLR-1.9.3018@netapp.com', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'cr-NBLR-1.9.3019@netapp.com', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
             
-            
+        });
+
+        public static Thread runExchangeServiceAndPopulateAvailability = new Thread(parameter =>
+        {
+            int floorIndex = Convert.ToInt32(parameter);
+
+            List<AttendeeInfo> attendees = new List<AttendeeInfo>();
+
+            for(int index=0;index<RoomSelectionGui.planData.floors[floorIndex].rooms.Count;index++)
+            {
+                attendees.Add(RoomSelectionGui.planData.floors[floorIndex].rooms[index].Id);
+            }
+
+            ExchangeService exchangeService = new ExchangeService();
+            exchangeService.UseDefaultCredentials = true;
+            exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
+            AvailabilityOptions myOptions = new AvailabilityOptions();
+            myOptions.MeetingDuration = appointmentItem.Duration;
+            myOptions.RequestedFreeBusyView = FreeBusyViewType.Detailed;
+            ThisAddIn.freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(appointmentItem.Start.Date, appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
         });
 
         //Event Handler ThisAddIn_Startup runs as soon as the add-in is clicked
@@ -103,21 +122,9 @@ namespace Meeting_Room_Booking_Add_In
         //Event handler for load free busy button click
         public static void loadFreeBusy(object sender, EventArgs e)
         {
-            List<AttendeeInfo> attendees = new List<AttendeeInfo>();
-            for (int i = 0; i < RoomSelectionGui.buttons.Count; i++)
-            {
-                RoomSelectionGui.buttons[i].BackColor = System.Drawing.Color.LightGoldenrodYellow;
-                attendees.Add(RoomSelectionGui.buttons[i].Name);
-            }
 
-
-            ExchangeService exchangeService = new ExchangeService();
-            exchangeService.UseDefaultCredentials = true;
-            exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
-            AvailabilityOptions myOptions = new AvailabilityOptions();
-            myOptions.MeetingDuration = appointmentItem.Duration;
-            myOptions.RequestedFreeBusyView = FreeBusyViewType.Detailed;
-            ThisAddIn.freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(appointmentItem.Start.Date, appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
+            //free busy result is already filled in the thread
+            ThisAddIn.runExchangeServiceAndPopulateAvailability.Join();
 
             //Check for each of the attendees availability
             for (int attendeeIndex = 0; attendeeIndex < ThisAddIn.freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)

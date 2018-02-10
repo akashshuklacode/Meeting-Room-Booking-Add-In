@@ -70,6 +70,11 @@ namespace Meeting_Room_Booking_Add_In
 
         private void populateRoomPanel(int floorIndex)
         {
+
+            //start thread to fill up the attendies free busy information
+            ThisAddIn.runExchangeServiceAndPopulateAvailability.Start(floorIndex);
+
+
             //clear the room's panel
             this.panelRooms.Controls.Clear();
 
