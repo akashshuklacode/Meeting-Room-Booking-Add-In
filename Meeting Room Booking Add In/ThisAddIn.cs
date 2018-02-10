@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
 using Microsoft.Exchange.WebServices.Data;
+using System.Threading;
 
 namespace Meeting_Room_Booking_Add_In
 {
@@ -42,6 +43,16 @@ namespace Meeting_Room_Booking_Add_In
         Outlook.Inspectors inspectors;
         static Outlook.AppointmentItem appointmentItem;
 
+        public static GetUserAvailabilityResults freeBusyResults;
+
+        //some common public threads
+        public static Thread runDeserializerAndPopulatePlanData = new Thread(() =>
+        {
+            RoomSelectionGui.planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'cr-NBLR-1.9.3018@netapp.com', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'cr-NBLR-1.9.3019@netapp.com', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
+            
+            
+        });
+
         //Event Handler ThisAddIn_Startup runs as soon as the add-in is clicked
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
@@ -70,6 +81,9 @@ namespace Meeting_Room_Booking_Add_In
                 {
                     //append the body of the meeting item
                     appointmentItem.Body = "Meeting Room Booking Addin";
+
+                    runDeserializerAndPopulatePlanData.Start();
+
                 }
             }
         }
@@ -96,21 +110,20 @@ namespace Meeting_Room_Booking_Add_In
                 attendees.Add(RoomSelectionGui.buttons[i].Name);
             }
 
+
             ExchangeService exchangeService = new ExchangeService();
             exchangeService.UseDefaultCredentials = true;
             exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
             AvailabilityOptions myOptions = new AvailabilityOptions();
             myOptions.MeetingDuration = appointmentItem.Duration;
             myOptions.RequestedFreeBusyView = FreeBusyViewType.Detailed;
-            GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(appointmentItem.Start.Date, appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
-
-
+            ThisAddIn.freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(appointmentItem.Start.Date, appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
 
             //Check for each of the attendees availability
-            for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
+            for (int attendeeIndex = 0; attendeeIndex < ThisAddIn.freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
             {
                 //Calendar events contains the count and the information for each attendee meetings
-                foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
+                foreach (CalendarEvent calenderItem in ThisAddIn.freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
                 {
                     //if the attendee has a 'Busy' status at that time slot, mark red
                     //appointmentItem.Body += "Debug:\n"+"appointmentItem.Start:=" + appointmentItem.Start + "\n" + "calenderItem.StartTime:=" + calenderItem.StartTime + "\n" + "appointmentItem.End:=" + appointmentItem.End + "\n" + "calenderItem.EndTime:=" + calenderItem.EndTime + "\n" + "DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) should be <=0:="+ DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) + "\n" + "DateTime.Compare(appointmentItem.End, calenderItem.EndTime) should be <=0:=" + DateTime.Compare(appointmentItem.End, calenderItem.EndTime)+"\n";
