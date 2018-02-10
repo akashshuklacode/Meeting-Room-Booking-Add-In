@@ -113,12 +113,10 @@ namespace Meeting_Room_Booking_Add_In
                 foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
                 {
                     //if the attendee has a 'Busy' status at that time slot, mark red
-                    appointmentItem.Body += "Debug:\n"+"appointmentItem.Start:=" + appointmentItem.Start + "\n" + "calenderItem.StartTime:=" + calenderItem.StartTime + "\n" + "appointmentItem.End:=" + appointmentItem.End + "\n" + "calenderItem.EndTime:=" + calenderItem.EndTime + "\n" + "DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) should be <=0:="+ DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) + "\n" + "DateTime.Compare(appointmentItem.End, calenderItem.EndTime) should be <=0:=" + DateTime.Compare(appointmentItem.End, calenderItem.EndTime)+"\n";
-                    //boundary condiiton of overlap of last meeting's last second or overlap of next meeting's first minute
-                    //tends to give wrong result
-                    if (DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(appointmentItem.End, calenderItem.EndTime) <= 0)
+                    //appointmentItem.Body += "Debug:\n"+"appointmentItem.Start:=" + appointmentItem.Start + "\n" + "calenderItem.StartTime:=" + calenderItem.StartTime + "\n" + "appointmentItem.End:=" + appointmentItem.End + "\n" + "calenderItem.EndTime:=" + calenderItem.EndTime + "\n" + "DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) should be <=0:="+ DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) + "\n" + "DateTime.Compare(appointmentItem.End, calenderItem.EndTime) should be <=0:=" + DateTime.Compare(appointmentItem.End, calenderItem.EndTime)+"\n";
+                    if ((DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(appointmentItem.End, calenderItem.EndTime) >= 0)||(DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) >= 0 && DateTime.Compare(appointmentItem.End, calenderItem.EndTime) <= 0))
                     {
-                        appointmentItem.Body += "Debug:\n" + "Hurray!!!!";
+                        //appointmentItem.Body += "Match!";
                         RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
                     }
                 }
