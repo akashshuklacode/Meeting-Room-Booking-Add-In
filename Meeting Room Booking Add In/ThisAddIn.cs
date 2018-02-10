@@ -103,20 +103,23 @@ namespace Meeting_Room_Booking_Add_In
             myOptions.MeetingDuration = appointmentItem.Duration;
             myOptions.RequestedFreeBusyView = FreeBusyViewType.Detailed;
             GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(appointmentItem.Start.Date, appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
-            foreach (AttendeeAvailability availability in freeBusyResults.AttendeesAvailability)
+
+
+
+            //Check for each of the attendees availability
+            for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
             {
-                foreach (CalendarEvent calendarItem in availability.CalendarEvents)
+                //Calendar events contains the count and the information for each attendee meetings
+                foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
                 {
-                    //if the start of the appointment falls in between the calendar item start and calendar item end
-                    if (DateTime.Compare(calendarItem.StartTime, appointmentItem.Start) <= 0 && DateTime.Compare(appointmentItem.Start, calendarItem.EndTime) <= 0)
+                    //if the attendee has a 'Busy' status at that time slot, mark red
+                    appointmentItem.Body += "Debug:\n"+"appointmentItem.Start:=" + appointmentItem.Start + "\n" + "calenderItem.StartTime:=" + calenderItem.StartTime + "\n" + "appointmentItem.End:=" + appointmentItem.End + "\n" + "calenderItem.EndTime:=" + calenderItem.EndTime + "\n" + "DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) should be <=0:="+ DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) + "\n" + "DateTime.Compare(appointmentItem.End, calenderItem.EndTime) should be <=0:=" + DateTime.Compare(appointmentItem.End, calenderItem.EndTime)+"\n";
+                    //boundary condiiton of overlap of last meeting's last second or overlap of next meeting's first minute
+                    //tends to give wrong result
+                    if (DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(appointmentItem.End, calenderItem.EndTime) <= 0)
                     {
-                        for (int q = 0; q < RoomSelectionGui.buttons.Count; q++)
-                        {
-                            if (RoomSelectionGui.buttons[q].Name == calendarItem.Details.Location)
-                            {
-                                RoomSelectionGui.buttons[q].BackColor = System.Drawing.Color.Red;
-                            }
-                        }
+                        appointmentItem.Body += "Debug:\n" + "Hurray!!!!";
+                        RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
                     }
                 }
             }

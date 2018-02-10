@@ -33,7 +33,7 @@ namespace Meeting_Room_Booking_Add_In
         private void PopulateData()
         {
             //Deserialize Plan Json data to populate planData
-            planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'1', 'Name':'cr-NBLR-1.9.3018@netapp.com', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'1', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
+            planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'cr-NBLR-1.9.3018@netapp.com', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'cr-NBLR-1.9.3019@netapp.com', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
 
             //populate floors' list
             floors = new List<Floor>();
@@ -94,7 +94,7 @@ namespace Meeting_Room_Booking_Add_In
                 int scale = 10;
                 buttons[i].Location = new System.Drawing.Point(rooms[i].locationX*scale,rooms[i].locationY*scale);
                 buttons[i].Size = new System.Drawing.Size(rooms[i].sizeX * scale, rooms[i].sizeY * scale);
-                buttons[i].Name = rooms[i].Name;
+                buttons[i].Name = rooms[i].Id;
                 buttons[i].Text = rooms[i].Name;
                 buttons[i].TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
                 buttons[i].BackColor = System.Drawing.Color.DarkGray;
@@ -146,6 +146,7 @@ namespace Meeting_Room_Booking_Add_In
             // 
             // FloorListComboBox
             // 
+            this.FloorListComboBox.BackColor = System.Drawing.SystemColors.Menu;
             this.FloorListComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.FloorListComboBox.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.FloorListComboBox.Font = new System.Drawing.Font("Comic Sans MS", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -165,14 +166,16 @@ namespace Meeting_Room_Booking_Add_In
             // 
             // loadFreeBusyButton
             // 
+            this.loadFreeBusyButton.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.loadFreeBusyButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.loadFreeBusyButton.Font = new System.Drawing.Font("Comic Sans MS", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.loadFreeBusyButton.ForeColor = System.Drawing.SystemColors.WindowText;
             this.loadFreeBusyButton.Location = new System.Drawing.Point(343, 20);
             this.loadFreeBusyButton.Name = "loadFreeBusyButton";
             this.loadFreeBusyButton.Size = new System.Drawing.Size(200, 26);
             this.loadFreeBusyButton.TabIndex = 2;
             this.loadFreeBusyButton.Text = "Load Free/Busy";
-            this.loadFreeBusyButton.UseVisualStyleBackColor = true;
+            this.loadFreeBusyButton.UseVisualStyleBackColor = false;
             // 
             // RoomSelectionGui
             // 
@@ -182,7 +185,7 @@ namespace Meeting_Room_Booking_Add_In
             this.Controls.Add(this.panelRooms);
             this.Controls.Add(this.FloorListComboBox);
             this.Name = "RoomSelectionGui";
-            this.Size = new System.Drawing.Size(1460, 753);
+            this.Size = new System.Drawing.Size(1106, 753);
             this.FormRegionShowing += new System.EventHandler(this.RoomSelectionGui_FormRegionShowing);
             this.FormRegionClosed += new System.EventHandler(this.RoomSelectionGui_FormRegionClosed);
             this.ResumeLayout(false);
