@@ -159,6 +159,7 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="jsonPlanDataClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -199,9 +200,6 @@
       <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
     </Compile>
     <AppDesigner Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Plan.txt" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Exchange.WebServices">

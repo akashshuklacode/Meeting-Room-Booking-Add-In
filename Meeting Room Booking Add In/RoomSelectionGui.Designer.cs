@@ -72,6 +72,9 @@ namespace Meeting_Room_Booking_Add_In
             //clear the room's panel
             this.panelRooms.Controls.Clear();
 
+            //reset progress bar
+            this.progressBar.Value = 0;
+
             //get the lis of rooms for the selected floor
             rooms = new List<Room>();
             for(int index=0;index<planData.floors[floorIndex].rooms.Count;index++)
@@ -246,12 +249,11 @@ namespace Meeting_Room_Booking_Add_In
             // progressBar
             // 
             this.progressBar.Location = new System.Drawing.Point(630, 20);
-            this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(144, 25);
-            this.progressBar.TabIndex = 3;
-            this.progressBar.Value = 0;
-            this.progressBar.Step = 1;
             this.progressBar.Maximum = 5;
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(144, 26);
+            this.progressBar.Step = 1;
+            this.progressBar.TabIndex = 3;
             // 
             // RoomSelectionGui
             // 
