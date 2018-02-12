@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 using Outlook = Microsoft.Office.Interop.Outlook;
-using Office = Microsoft.Office.Core;
 using Microsoft.Exchange.WebServices.Data;
 using System.Threading;
 
@@ -41,7 +37,7 @@ namespace Meeting_Room_Booking_Add_In
         //This reference prevents the garbage collector from freeing the memory that contains the event handler for the
         //E:Microsoft.Office.Interop.Outlook.InspectorsEvents_Event.NewInspector event.
         Outlook.Inspectors inspectors;
-        static Outlook.AppointmentItem appointmentItem;
+        public static Outlook.AppointmentItem appointmentItem;
 
         //Event Handler ThisAddIn_Startup runs as soon as the add-in is clicked
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
@@ -71,6 +67,7 @@ namespace Meeting_Room_Booking_Add_In
                 {
                     //append the body of the meeting item
                     appointmentItem.Body = "Meeting Room Booking Addin";
+                    //Deserialize Plan Json data to populate planData
                     RoomSelectionGui.planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'cr-NBLR-1.9.3018@netapp.com', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'cr-NBLR-1.9.3019@netapp.com', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
                 }
             }
@@ -88,47 +85,7 @@ namespace Meeting_Room_Booking_Add_In
             appointmentItem.Recipients.Add(button.Name);
         }
 
-        //Event handler for load free busy button click
-        public static void loadFreeBusy(object sender, EventArgs e)
-        {
-
-            List<AttendeeInfo> attendees = new List<AttendeeInfo>();
-            for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
-            {
-                attendees.Add(RoomSelectionGui.buttons[index].Name);
-            }
-
-
-            //run the below steps in a thread (make button responsive)
-
-            new Thread( () => 
-            { 
-                ExchangeService exchangeService = new ExchangeService();
-                exchangeService.UseDefaultCredentials = true;
-                exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
-                AvailabilityOptions myOptions = new AvailabilityOptions();
-                myOptions.MeetingDuration = appointmentItem.Duration;
-                myOptions.RequestedFreeBusyView = FreeBusyViewType.Detailed;
-                GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(appointmentItem.Start.Date, appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
-
-                //Check for each of the attendees availability
-                for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
-                {
-                    //Calendar events contains the count and the information for each attendee meetings
-                    foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
-                    {
-                        //if the attendee has a 'Busy' status at that time slot, mark red
-                        //appointmentItem.Body += "Debug:\n"+"appointmentItem.Start:=" + appointmentItem.Start + "\n" + "calenderItem.StartTime:=" + calenderItem.StartTime + "\n" + "appointmentItem.End:=" + appointmentItem.End + "\n" + "calenderItem.EndTime:=" + calenderItem.EndTime + "\n" + "DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) should be <=0:="+ DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) + "\n" + "DateTime.Compare(appointmentItem.End, calenderItem.EndTime) should be <=0:=" + DateTime.Compare(appointmentItem.End, calenderItem.EndTime)+"\n";
-                        if ((DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(appointmentItem.End, calenderItem.EndTime) >= 0)||(DateTime.Compare(appointmentItem.Start, calenderItem.StartTime) >= 0 && DateTime.Compare(appointmentItem.End, calenderItem.EndTime) <= 0))
-                        {
-                            //appointmentItem.Body += "Match!";
-                            RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
-                        }
-                    }
-                }
-            }).Start();
-
-        }
+        
 
         #region VSTO generated code
 

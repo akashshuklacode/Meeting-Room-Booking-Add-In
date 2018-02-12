@@ -1,6 +1,7 @@
 ﻿using Microsoft.Exchange.WebServices.Data;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace Meeting_Room_Booking_Add_In
@@ -61,7 +62,7 @@ namespace Meeting_Room_Booking_Add_In
             populateRoomPanel(0);
 
             //Add Event handler for load free busy button click
-            this.loadFreeBusyButton.Click += new EventHandler(ThisAddIn.loadFreeBusy);
+            this.loadFreeBusyButton.Click += new EventHandler(loadFreeBusy);
 
         }
 
@@ -113,6 +114,68 @@ namespace Meeting_Room_Booking_Add_In
             populateRoomPanel(this.FloorListComboBox.SelectedIndex);
         }
 
+        //Event handler for load free busy button click
+        public void loadFreeBusy(object sender, EventArgs e)
+        {
+            //reset color for buttons
+            for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
+            {
+                RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.DarkGray;
+            }
+            //reset progress bar
+            this.progressBar.Value = 0;
+
+            //start operation for load free busy
+            this.progressBar.PerformStep();
+
+            List<AttendeeInfo> attendees = new List<AttendeeInfo>();
+            for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
+            {
+                attendees.Add(RoomSelectionGui.buttons[index].Name);
+            }
+            this.progressBar.PerformStep();
+
+            //run the below steps in a thread (to make loadFree/Busy button responsive)
+            Thread thread = new Thread(() =>
+            {
+                ExchangeService exchangeService = new ExchangeService();
+                exchangeService.UseDefaultCredentials = true;
+                exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
+                AvailabilityOptions myOptions = new AvailabilityOptions();
+                myOptions.MeetingDuration = ThisAddIn.appointmentItem.Duration;
+                myOptions.RequestedFreeBusyView = FreeBusyViewType.FreeBusy;
+                GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(ThisAddIn.appointmentItem.Start.Date, ThisAddIn.appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
+
+                //Check for each of the attendees availability
+                for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
+                {
+                    //Calendar events contains the count and the information for each attendee meetings
+                    foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
+                    {
+                        //if the attendee has a 'Busy' status at that time slot, mark red
+                        if ((DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) >= 0) || (DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) >= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) <= 0))
+                        {
+                            RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
+                        }
+                    }
+                }
+            });
+            //thread.Priority = ThreadPriority.Highest;
+            this.progressBar.PerformStep();
+            thread.Start();
+
+            thread.Join();
+            this.progressBar.PerformStep();
+            for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
+            {
+                if (RoomSelectionGui.buttons[index].BackColor != System.Drawing.Color.OrangeRed)
+                {
+                    RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.LightGreen;
+                }
+            }
+            this.progressBar.PerformStep();
+        }
+
         //-------------------------------------------------------------------------------------------------------------------
         #endregion
 
@@ -144,6 +207,7 @@ namespace Meeting_Room_Booking_Add_In
             this.FloorListComboBox = new System.Windows.Forms.ComboBox();
             this.panelRooms = new System.Windows.Forms.Panel();
             this.loadFreeBusyButton = new System.Windows.Forms.Button();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // FloorListComboBox
@@ -179,10 +243,21 @@ namespace Meeting_Room_Booking_Add_In
             this.loadFreeBusyButton.Text = "Load Free/Busy";
             this.loadFreeBusyButton.UseVisualStyleBackColor = false;
             // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(630, 20);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(144, 25);
+            this.progressBar.TabIndex = 3;
+            this.progressBar.Value = 0;
+            this.progressBar.Step = 1;
+            this.progressBar.Maximum = 5;
+            // 
             // RoomSelectionGui
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.progressBar);
             this.Controls.Add(this.loadFreeBusyButton);
             this.Controls.Add(this.panelRooms);
             this.Controls.Add(this.FloorListComboBox);
@@ -214,6 +289,7 @@ namespace Meeting_Room_Booking_Add_In
         private System.Windows.Forms.ComboBox FloorListComboBox;
         private System.Windows.Forms.Panel panelRooms;
         private Button loadFreeBusyButton;
+        public ProgressBar progressBar;
 
         public partial class RoomSelectionGuiFactory : Microsoft.Office.Tools.Outlook.IFormRegionFactory
         {
