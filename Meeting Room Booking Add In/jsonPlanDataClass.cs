@@ -36,7 +36,7 @@ namespace Meeting_Room_Booking_Add_In
                                 "{'Id':'cr-NBLR-1.9.3018@netapp.com', 'Name':'Teal', 'locationX':'140', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}," +
                                 "{'Id':'cr-NBLR-1.9.3019@netapp.com', 'Name':'Bulbul', 'locationX':'150', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}," +
                                 "{'Id':'cr-NBLR-1.9.3020@netapp.com', 'Name':'Wagtail', 'locationX':'160', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}," +
-                                "{'Id':'cr-NBLR-1.9.3021@netapp.com', 'Name':'Lark(booked)', 'locationX':'170', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}," +
+                                "{'Id':'cr-NBLR-1.9.3021@netapp.com', 'Name':'Lark', 'locationX':'170', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}," +
                                 "{'Id':'cr-NBLR-1.9.3022@netapp.com', 'Name':'Siskin', 'locationX':'140', 'locationY':'40', 'sizeX':'25', 'sizeY':'10'}," +
                                 "{'Id':'cr-NBLR-1.9.3023@netapp.com', 'Name':'Wren', 'locationX':'135', 'locationY':'45', 'sizeX':'5', 'sizeY':'5'}," +
                                 "{'Id':'cr-NBLR-1.9.3024@netapp.com', 'Name':'Swan', 'locationX':'135', 'locationY':'40', 'sizeX':'5', 'sizeY':'5'}," +

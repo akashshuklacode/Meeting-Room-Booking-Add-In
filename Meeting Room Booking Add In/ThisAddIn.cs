@@ -66,7 +66,7 @@ namespace Meeting_Room_Booking_Add_In
                 if (appointmentItem.EntryID==null)
                 {
                     //append the body of the meeting item
-                    appointmentItem.Body = "Meeting Room Booking Addin";
+                    //appointmentItem.Body = "Meeting Room Booking Addin";
                     //Deserialize Plan Json data to populate planData
                     RoomSelectionGui.planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>(jsonPlanDataClass.jsonPlanData);
                 }

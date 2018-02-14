@@ -104,7 +104,7 @@ namespace Meeting_Room_Booking_Add_In
                 buttons.Add(new Button());
             }
 
-           
+
             //for each room's button resize and reposition the button
             for (int i = 0; i < buttons.Count; i++)
             {
@@ -117,7 +117,9 @@ namespace Meeting_Room_Booking_Add_In
                 buttons[i].Name = rooms[i].Id;
                 buttons[i].Text = rooms[i].Name;
                 buttons[i].TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
                 buttons[i].BackColor = System.Drawing.Color.DarkGray;
+
                 //assing an action for button click
                 //generic for all buttons
                 buttons[i].Click += new System.EventHandler(ThisAddIn.buttonClick);
@@ -143,7 +145,10 @@ namespace Meeting_Room_Booking_Add_In
             //reset color for buttons
             for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
             {
-                RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.DarkGray;
+                if (RoomSelectionGui.buttons[index].Text != "Lark")
+                    RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.DarkGray;
+                else
+                    RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.OrangeRed;
             }
 
             //add list of attendees
