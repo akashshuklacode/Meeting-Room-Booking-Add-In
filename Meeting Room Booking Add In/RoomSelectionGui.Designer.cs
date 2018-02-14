@@ -30,12 +30,22 @@ namespace Meeting_Room_Booking_Add_In
 
             //Deserialize the json file to fill up entries
             this.PopulateData();
+
+            //set event handler for appointment item property change
+            ThisAddIn.appointmentItem.PropertyChange += AppointmentItem_PropertyChange;
+        }
+
+        private void AppointmentItem_PropertyChange(string Name)
+        {
+            if(Name=="Start"||Name=="End"||Name=="StartInStartTimeZone"||Name=="EndInEndTimeZone")
+            {
+                this.FloorListComboBox.SelectedIndex = 0;
+                populateRoomPanel(0);
+            }
         }
 
         private void PopulateData()
         {
-            //Deserialize Plan Json data to populate planData
-            //planData = Newtonsoft.Json.JsonConvert.DeserializeObject<Model>("{'floors':[{'Name':'Ground Floor','rooms':[{'Id':'cr-NBLR-1.9.3018@netapp.com', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'cr-NBLR-1.9.3019@netapp.com', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'}]},{'Name':'1st Floor','rooms':[{'Id':'1', 'Name':'1st Room', 'locationX':'0', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'},{'Id':'2', 'Name':'2nd Room', 'locationX':'10', 'locationY':'10', 'sizeX':'10', 'sizeY':'10'},{'Id':'3', 'Name':'3rd Room', 'locationX':'20', 'locationY':'0', 'sizeX':'10', 'sizeY':'10'}]}]}");
 
             //populate floors' list
             floors = new List<Floor>();
@@ -57,48 +67,52 @@ namespace Meeting_Room_Booking_Add_In
             //assign event handler for floor list combobox selected index change
             this.FloorListComboBox.SelectedIndexChanged += new System.EventHandler(FloorListComboBoxSelectionChanged);
 
-            //populate panel with selected floor
-            //default floor is Ground Floor (0)
-            populateRoomPanel(0);
-
-            //Add Event handler for load free busy button click
-            this.loadFreeBusyButton.Click += new EventHandler(loadFreeBusy);
-
         }
 
         private void populateRoomPanel(int floorIndex)
         {
+            if (floorIndex == 0)
+            {
+                //clear the room's panel
+                this.panelRooms.Controls.Clear();
+                //reset progress bar
+                this.progressBar.Style = ProgressBarStyle.Blocks;
+                this.progressBar.Value = 0;
+                return;
+            }
 
             //clear the room's panel
             this.panelRooms.Controls.Clear();
 
-            //reset progress bar
-            this.progressBar.Value = 0;
-
+            //start progress bar marquee
+            this.progressBar.Style = ProgressBarStyle.Marquee;
+            
             //get the lis of rooms for the selected floor
             rooms = new List<Room>();
-            for(int index=0;index<planData.floors[floorIndex].rooms.Count;index++)
+            for (int index = 0; index < planData.floors[floorIndex].rooms.Count; index++)
             {
                 rooms.Add(planData.floors[floorIndex].rooms[index]);
             }
 
+            
             //create the button list
             buttons = new List<Button>();
 
             //add new button object to the buttons list
-            for(int i=0;i<planData.floors[floorIndex].rooms.Count;i++)
+            for (int i = 0; i < planData.floors[floorIndex].rooms.Count; i++)
             {
                 buttons.Add(new Button());
             }
 
+           
             //for each room's button resize and reposition the button
             for (int i = 0; i < buttons.Count; i++)
             {
                 //add the button to the panel
                 panelRooms.Controls.Add(buttons[i]);
                 //populate each button with its respective properties
-                int scale = 10;
-                buttons[i].Location = new System.Drawing.Point(rooms[i].locationX*scale,rooms[i].locationY*scale);
+                int scale = 8;
+                buttons[i].Location = new System.Drawing.Point(rooms[i].locationX * scale, rooms[i].locationY * scale);
                 buttons[i].Size = new System.Drawing.Size(rooms[i].sizeX * scale, rooms[i].sizeY * scale);
                 buttons[i].Name = rooms[i].Id;
                 buttons[i].Text = rooms[i].Name;
@@ -108,6 +122,11 @@ namespace Meeting_Room_Booking_Add_In
                 //generic for all buttons
                 buttons[i].Click += new System.EventHandler(ThisAddIn.buttonClick);
             }
+
+            //Load Free Busy information
+            loadFreeBusy();
+
+            
         }
 
         //Event handler for floor selection changed from dropdown
@@ -117,58 +136,49 @@ namespace Meeting_Room_Booking_Add_In
             populateRoomPanel(this.FloorListComboBox.SelectedIndex);
         }
 
-        //Event handler for load free busy button click
-        public void loadFreeBusy(object sender, EventArgs e)
+        //Load free busy information
+        public void loadFreeBusy()
         {
+            
             //reset color for buttons
             for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
             {
                 RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.DarkGray;
             }
-            //reset progress bar
-            this.progressBar.Value = 0;
 
-            //start operation for load free busy
-            this.progressBar.PerformStep();
-
+            //add list of attendees
             List<AttendeeInfo> attendees = new List<AttendeeInfo>();
             for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
             {
                 attendees.Add(RoomSelectionGui.buttons[index].Name);
             }
-            this.progressBar.PerformStep();
 
-            //run the below steps in a thread (to make loadFree/Busy button responsive)
-            Thread thread = new Thread(() =>
+            Thread thread = new Thread(() => 
             {
-                ExchangeService exchangeService = new ExchangeService();
-                exchangeService.UseDefaultCredentials = true;
-                exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
-                AvailabilityOptions myOptions = new AvailabilityOptions();
-                myOptions.MeetingDuration = ThisAddIn.appointmentItem.Duration;
-                myOptions.RequestedFreeBusyView = FreeBusyViewType.FreeBusy;
-                GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(ThisAddIn.appointmentItem.Start.Date, ThisAddIn.appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
+            ExchangeService exchangeService = new ExchangeService();
+            exchangeService.UseDefaultCredentials = true;
+            exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
+            AvailabilityOptions myOptions = new AvailabilityOptions();
+            myOptions.MeetingDuration = ThisAddIn.appointmentItem.Duration;
+            myOptions.RequestedFreeBusyView = FreeBusyViewType.FreeBusy;
+            GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(ThisAddIn.appointmentItem.Start.Date, ThisAddIn.appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
 
-                //Check for each of the attendees availability
-                for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
+            
+            //Check for each of the attendees availability
+            for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
+            {
+                //Calendar events contains the count and the information for each attendee meetings
+                foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
                 {
-                    //Calendar events contains the count and the information for each attendee meetings
-                    foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
+                    //if the attendee has a 'Busy' status at that time slot, mark red
+                    if ((DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) >= 0) || (DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) >= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) <= 0))
                     {
-                        //if the attendee has a 'Busy' status at that time slot, mark red
-                        if ((DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) >= 0) || (DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) >= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) <= 0))
-                        {
-                            RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
-                        }
+                        RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
+                        //this.progressBar.PerformStep();
                     }
                 }
-            });
-            //thread.Priority = ThreadPriority.Highest;
-            this.progressBar.PerformStep();
-            thread.Start();
+            }
 
-            thread.Join();
-            this.progressBar.PerformStep();
             for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
             {
                 if (RoomSelectionGui.buttons[index].BackColor != System.Drawing.Color.OrangeRed)
@@ -176,7 +186,13 @@ namespace Meeting_Room_Booking_Add_In
                     RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.LightGreen;
                 }
             }
-            this.progressBar.PerformStep();
+
+            });
+            thread.Start();
+
+            thread.Join();
+            this.progressBar.Style = ProgressBarStyle.Blocks;
+            this.progressBar.Value = 30;
         }
 
         //-------------------------------------------------------------------------------------------------------------------
@@ -209,8 +225,8 @@ namespace Meeting_Room_Booking_Add_In
         {
             this.FloorListComboBox = new System.Windows.Forms.ComboBox();
             this.panelRooms = new System.Windows.Forms.Panel();
-            this.loadFreeBusyButton = new System.Windows.Forms.Button();
             this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // FloorListComboBox
@@ -218,56 +234,53 @@ namespace Meeting_Room_Booking_Add_In
             this.FloorListComboBox.BackColor = System.Drawing.SystemColors.Menu;
             this.FloorListComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.FloorListComboBox.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.FloorListComboBox.Font = new System.Drawing.Font("Comic Sans MS", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.FloorListComboBox.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FloorListComboBox.FormattingEnabled = true;
             this.FloorListComboBox.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.FloorListComboBox.Location = new System.Drawing.Point(20, 20);
+            this.FloorListComboBox.Location = new System.Drawing.Point(227, 20);
             this.FloorListComboBox.Name = "FloorListComboBox";
-            this.FloorListComboBox.Size = new System.Drawing.Size(220, 26);
+            this.FloorListComboBox.Size = new System.Drawing.Size(220, 24);
             this.FloorListComboBox.TabIndex = 0;
             // 
             // panelRooms
             // 
-            this.panelRooms.Location = new System.Drawing.Point(20, 70);
+            this.panelRooms.Location = new System.Drawing.Point(20, 130);
             this.panelRooms.Name = "panelRooms";
-            this.panelRooms.Size = new System.Drawing.Size(1064, 628);
+            this.panelRooms.Size = new System.Drawing.Size(1460, 628);
             this.panelRooms.TabIndex = 1;
-            // 
-            // loadFreeBusyButton
-            // 
-            this.loadFreeBusyButton.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.loadFreeBusyButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.loadFreeBusyButton.Font = new System.Drawing.Font("Comic Sans MS", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.loadFreeBusyButton.ForeColor = System.Drawing.SystemColors.WindowText;
-            this.loadFreeBusyButton.Location = new System.Drawing.Point(343, 20);
-            this.loadFreeBusyButton.Name = "loadFreeBusyButton";
-            this.loadFreeBusyButton.Size = new System.Drawing.Size(200, 26);
-            this.loadFreeBusyButton.TabIndex = 2;
-            this.loadFreeBusyButton.Text = "Load Free/Busy";
-            this.loadFreeBusyButton.UseVisualStyleBackColor = false;
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(630, 20);
-            this.progressBar.Maximum = 5;
+            this.progressBar.Location = new System.Drawing.Point(227, 52);
+            this.progressBar.Maximum = 30;
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(144, 26);
-            this.progressBar.Step = 1;
+            this.progressBar.Size = new System.Drawing.Size(220, 11);
             this.progressBar.TabIndex = 3;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(126, 23);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(96, 16);
+            this.label1.TabIndex = 4;
+            this.label1.Text = "Select Floor : ";
             // 
             // RoomSelectionGui
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.progressBar);
-            this.Controls.Add(this.loadFreeBusyButton);
             this.Controls.Add(this.panelRooms);
             this.Controls.Add(this.FloorListComboBox);
             this.Name = "RoomSelectionGui";
-            this.Size = new System.Drawing.Size(1106, 753);
+            this.Size = new System.Drawing.Size(1483, 782);
             this.FormRegionShowing += new System.EventHandler(this.RoomSelectionGui_FormRegionShowing);
             this.FormRegionClosed += new System.EventHandler(this.RoomSelectionGui_FormRegionClosed);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -290,8 +303,8 @@ namespace Meeting_Room_Booking_Add_In
 
         private System.Windows.Forms.ComboBox FloorListComboBox;
         private System.Windows.Forms.Panel panelRooms;
-        private Button loadFreeBusyButton;
         public ProgressBar progressBar;
+        private Label label1;
 
         public partial class RoomSelectionGuiFactory : Microsoft.Office.Tools.Outlook.IFormRegionFactory
         {
