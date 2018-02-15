@@ -158,39 +158,46 @@ namespace Meeting_Room_Booking_Add_In
                 attendees.Add(RoomSelectionGui.buttons[index].Name);
             }
 
-            Thread thread = new Thread(() => 
+            Thread thread = new Thread(() =>
             {
-            ExchangeService exchangeService = new ExchangeService();
-            exchangeService.UseDefaultCredentials = true;
-            exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
-            AvailabilityOptions myOptions = new AvailabilityOptions();
-            myOptions.MeetingDuration = ThisAddIn.appointmentItem.Duration;
-            myOptions.RequestedFreeBusyView = FreeBusyViewType.FreeBusy;
-            GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(ThisAddIn.appointmentItem.Start.Date, ThisAddIn.appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
-
-            
-            //Check for each of the attendees availability
-            for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
-            {
-                //Calendar events contains the count and the information for each attendee meetings
-                foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
+                try
                 {
-                    //if the attendee has a 'Busy' status at that time slot, mark red
-                    if ((DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) >= 0) || (DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) >= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) <= 0))
+                    ExchangeService exchangeService = new ExchangeService();
+                    exchangeService.UseDefaultCredentials = true;
+                    exchangeService.Url = new Uri("https://email.netapp.com/EWS/Exchange.asmx");
+                    AvailabilityOptions myOptions = new AvailabilityOptions();
+                    myOptions.MeetingDuration = ThisAddIn.appointmentItem.Duration;
+                    myOptions.RequestedFreeBusyView = FreeBusyViewType.FreeBusy;
+                    GetUserAvailabilityResults freeBusyResults = exchangeService.GetUserAvailability(attendees, new TimeWindow(ThisAddIn.appointmentItem.Start.Date, ThisAddIn.appointmentItem.Start.Date.AddDays(1)), AvailabilityData.FreeBusy, myOptions);
+
+
+                    //Check for each of the attendees availability
+                    for (int attendeeIndex = 0; attendeeIndex < freeBusyResults.AttendeesAvailability.Count; attendeeIndex++)
                     {
-                        RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
-                        //this.progressBar.PerformStep();
+                        //Calendar events contains the count and the information for each attendee meetings
+                        foreach (CalendarEvent calenderItem in freeBusyResults.AttendeesAvailability[attendeeIndex].CalendarEvents)
+                        {
+                            //if the attendee has a 'Busy' status at that time slot, mark red
+                            if ((DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) <= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) >= 0) || (DateTime.Compare(ThisAddIn.appointmentItem.Start, calenderItem.StartTime) >= 0 && DateTime.Compare(ThisAddIn.appointmentItem.End, calenderItem.EndTime) <= 0))
+                            {
+                                RoomSelectionGui.buttons[attendeeIndex].BackColor = System.Drawing.Color.OrangeRed;
+                                //this.progressBar.PerformStep();
+                            }
+                        }
+                    }
+
+                    for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
+                    {
+                        if (RoomSelectionGui.buttons[index].BackColor != System.Drawing.Color.OrangeRed)
+                        {
+                            RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.LightGreen;
+                        }
                     }
                 }
-            }
-
-            for (int index = 0; index < RoomSelectionGui.buttons.Count; index++)
-            {
-                if (RoomSelectionGui.buttons[index].BackColor != System.Drawing.Color.OrangeRed)
+                catch (Exception)
                 {
-                    RoomSelectionGui.buttons[index].BackColor = System.Drawing.Color.LightGreen;
+                    this.panelRooms.Visible = false;
                 }
-            }
 
             });
             thread.Start();
