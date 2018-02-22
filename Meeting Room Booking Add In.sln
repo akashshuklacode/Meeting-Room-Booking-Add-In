@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meeting Room Booking Add In", "Meeting Room Booking Add In\Meeting Room Booking Add In.csproj", "{2793B612-03C9-4B59-8FA7-166A7D4EEC77}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{96647730-C5D6-402F-861F-DA03F0F6B469}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,8 @@ Global
 		{2793B612-03C9-4B59-8FA7-166A7D4EEC77}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2793B612-03C9-4B59-8FA7-166A7D4EEC77}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2793B612-03C9-4B59-8FA7-166A7D4EEC77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96647730-C5D6-402F-861F-DA03F0F6B469}.Debug|Any CPU.ActiveCfg = Debug
+		{96647730-C5D6-402F-861F-DA03F0F6B469}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
